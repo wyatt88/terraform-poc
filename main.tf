@@ -1,7 +1,8 @@
 provider "aws" {
-  access_key = "${var.aws_access_key}"
-  secret_key = "${var.aws_secret_key}"
-  region     = "${var.aws_region}"
+  access_key             = "${var.aws_access_key}"
+  secret_key             = "${var.aws_secret_key}"
+  region                 = "${var.aws_region}"
+  skip_region_validation = true
 }
 
 locals {
@@ -105,7 +106,7 @@ data "aws_ami" "distro" {
 
   filter {
     name   = "name"
-    values = ["amzn2-ami-hvm-*"]
+    values = ["CentOS7_Marketplace_*"]
   }
 
   filter {
@@ -113,7 +114,7 @@ data "aws_ami" "distro" {
     values = ["hvm"]
   }
 
-  owners = ["137112412989"] #AWS
+  owners = ["741251161495"] #CentOS
 }
 
 resource "aws_instance" "bastion" {
@@ -129,6 +130,31 @@ resource "aws_instance" "bastion" {
   }
 }
 
+resource "null_resource" "bastion" {
+  # Changes to any instance of the bastion requires re-provisioning
+  triggers {
+    bastion_instance_ids = "${join(",",aws_instance.bastion.*.id)}"
+  }
+
+  connection {
+    type        = "ssh"
+    user        = "centos"
+    private_key = "${tls_private_key.pingcap-generated.private_key_pem}"
+    host        = "${aws_instance.bastion.*.public_ip}"
+  }
+
+  provisioner "file" {
+    source      = "keys/private.pem"
+    destination = "/home/centos/.ssh/private.pem"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod 600 /home/centos/.ssh/private.pem",
+    ]
+  }
+}
+
 # resource "aws_key_pair" "pingcap" {}
 
 resource "aws_instance" "tidb" {
@@ -137,7 +163,7 @@ resource "aws_instance" "tidb" {
   instance_type          = "t2.micro"
   subnet_id              = "${element(aws_subnet.private.*.id, count.index)}"
   key_name               = "${aws_key_pair.generated.key_name}"
-  vpc_security_group_ids = ["${aws_security_group.intranet.id}", "${aws_security_group.outbound.id}"]
+  vpc_security_group_ids = ["${aws_security_group.intranet.id}", "${aws_security_group.outbound.id}", "${aws_security_group.tidb.id}"]
 
   tags {
     Name    = "PingCAP-TiDB-${count.index}"
@@ -152,7 +178,17 @@ resource "aws_instance" "tikv" {
   instance_type          = "i3.4xlarge"
   subnet_id              = "${element(aws_subnet.private.*.id, count.index)}"
   key_name               = "${aws_key_pair.generated.key_name}"
-  vpc_security_group_ids = ["${aws_security_group.intranet.id}", "${aws_security_group.outbound.id}"]
+  vpc_security_group_ids = ["${aws_security_group.intranet.id}", "${aws_security_group.outbound.id}", "${aws_security_group.tikv.id}"]
+
+  ephemeral_block_device {
+    device_name  = "/dev/sdb"
+    virtual_name = "ephemeral0"
+  }
+
+  ephemeral_block_device {
+    device_name  = "/dev/sdc"
+    virtual_name = "ephemeral1"
+  }
 
   tags {
     Name    = "PingCAP-TiKV-${count.index}"
@@ -167,7 +203,12 @@ resource "aws_instance" "pd" {
   instance_type          = "i3.2xlarge"
   subnet_id              = "${element(aws_subnet.private.*.id, count.index)}"
   key_name               = "${aws_key_pair.generated.key_name}"
-  vpc_security_group_ids = ["${aws_security_group.intranet.id}", "${aws_security_group.outbound.id}"]
+  vpc_security_group_ids = ["${aws_security_group.intranet.id}", "${aws_security_group.outbound.id}", "${aws_security_group.pd.id}"]
+
+  ephemeral_block_device {
+    device_name  = "/dev/sdb"
+    virtual_name = "ephemeral0"
+  }
 
   tags {
     Name    = "PingCAP-PD-${count.index}"
@@ -264,6 +305,123 @@ resource "aws_security_group_rule" "allow-all-out-traffic" {
   security_group_id = "${aws_security_group.outbound.id}"
 }
 
+resource "aws_security_group" "tidb" {
+  name   = "pingcap-tidb-tidb-securitygroup"
+  vpc_id = "${aws_vpc.vpc_tidb_cluster.id}"
+
+  tags {
+    Name = "pingcap-tidb-tidb-securitygroup"
+  }
+}
+
+resource "aws_security_group_rule" "allow-tidb-4000-connections" {
+  type              = "ingress"
+  from_port         = 0
+  to_port           = 4000
+  protocol          = "TCP"
+  cidr_blocks       = ["10.0.0.0/16"]
+  security_group_id = "${aws_security_group.tidb.id}"
+}
+
+resource "aws_security_group_rule" "allow-tidb-10080-connections" {
+  type              = "ingress"
+  from_port         = 0
+  to_port           = 10080
+  protocol          = "TCP"
+  cidr_blocks       = ["10.0.0.0/16"]
+  security_group_id = "${aws_security_group.tidb.id}"
+}
+
+resource "aws_security_group" "tikv" {
+  name   = "pingcap-tidb-tikv-securitygroup"
+  vpc_id = "${aws_vpc.vpc_tidb_cluster.id}"
+
+  tags {
+    Name = "pingcap-tidb-tikv-securitygroup"
+  }
+}
+
+resource "aws_security_group_rule" "allow-tikv-20160-connections" {
+  type              = "ingress"
+  from_port         = 0
+  to_port           = 20160
+  protocol          = "TCP"
+  cidr_blocks       = ["10.0.0.0/16"]
+  security_group_id = "${aws_security_group.tikv.id}"
+}
+
+resource "aws_security_group" "pd" {
+  name   = "pingcap-tidb-pd-securitygroup"
+  vpc_id = "${aws_vpc.vpc_tidb_cluster.id}"
+
+  tags {
+    Name = "pingcap-tidb-pd-securitygroup"
+  }
+}
+
+resource "aws_security_group_rule" "allow-pd-use-connections" {
+  type              = "ingress"
+  from_port         = 0
+  to_port           = 2379
+  protocol          = "TCP"
+  cidr_blocks       = ["10.0.0.0/16"]
+  security_group_id = "${aws_security_group.pd.id}"
+}
+
+resource "aws_security_group_rule" "allow-pd-peer-connections" {
+  type              = "ingress"
+  from_port         = 0
+  to_port           = 2380
+  protocol          = "TCP"
+  cidr_blocks       = ["10.0.0.0/16"]
+  security_group_id = "${aws_security_group.pd.id}"
+}
+
+resource "aws_security_group" "monitor" {
+  name   = "pingcap-tidb-monitor-securitygroup"
+  vpc_id = "${aws_vpc.vpc_tidb_cluster.id}"
+
+  tags {
+    Name = "pingcap-tidb-monitor-securitygroup"
+  }
+}
+
+resource "aws_security_group_rule" "allow-monitor-prometheus-connections" {
+  type              = "ingress"
+  from_port         = 0
+  to_port           = 9090
+  protocol          = "TCP"
+  cidr_blocks       = ["10.0.0.0/16"]
+  security_group_id = "${aws_security_group.monitor.id}"
+}
+
+resource "aws_security_group_rule" "allow-monitor-pushgateway-connections" {
+  type              = "ingress"
+  from_port         = 0
+  to_port           = 9091
+  protocol          = "TCP"
+  cidr_blocks       = ["10.0.0.0/16"]
+  security_group_id = "${aws_security_group.monitor.id}"
+}
+
+resource "aws_security_group_rule" "allow-monitor-node-connections" {
+  type              = "ingress"
+  from_port         = 0
+  to_port           = 9100
+  protocol          = "TCP"
+  cidr_blocks       = ["10.0.0.0/16"]
+  security_group_id = "${aws_security_group.monitor.id}"
+}
+
+resource "aws_security_group_rule" "allow-monitor-grafana-connections" {
+  type              = "ingress"
+  from_port         = 0
+  to_port           = 3000
+  protocol          = "TCP"
+  cidr_blocks       = ["10.0.0.0/16"]
+  security_group_id = "${aws_security_group.monitor.id}"
+}
+
 resource "aws_security_group" "intranet" {
   name   = "pingcap-tidb-intranet-securitygroup"
   vpc_id = "${aws_vpc.vpc_tidb_cluster.id}"
@@ -302,7 +460,7 @@ resource "aws_security_group" "aws-elb" {
 
 resource "aws_security_group_rule" "aws-allow-tidb-access" {
   type              = "ingress"
-  from_port         = 4000
+  from_port         = 0
   to_port           = 4000
   protocol          = "TCP"
   cidr_blocks       = ["0.0.0.0/0"]
@@ -373,7 +531,7 @@ resource "null_resource" "inventories" {
 terraform {
   backend "consul" {
     address = "127.0.0.1:32772"
-    path    = "tidb-cluster-tangliu"
+    path    = "tidb-cluster"
     lock    = false
   }
 }
