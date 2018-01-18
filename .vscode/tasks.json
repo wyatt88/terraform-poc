@@ -1,0 +1,27 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "plan",
+            "type": "shell",
+            "command": "terraform plan -var 'aws_access_key=YOUR_ACCESS_KEY' -var 'aws_secret_key=YOUR_SECRET_KEY'"
+        },
+        {
+            "label": "apply",
+            "type": "shell",
+            "command": "terraform apply -var 'aws_access_key=YOUR_ACCESS_KEY' -var 'aws_secret_key=YOUR_SECRET_KEY'"
+        },
+        {
+            "label": "destroy",
+            "type": "shell",
+            "command": "terraform destroy -var 'aws_access_key=YOUR_ACCESS_KEY' -var 'aws_secret_key=YOUR_SECRET_KEY'"
+        },
+        {
+            "label": "init",
+            "type": "shell",
+            "command": "terraform init"
+        }
+    ]
+}
