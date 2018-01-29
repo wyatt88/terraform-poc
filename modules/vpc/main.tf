@@ -1,6 +1,6 @@
 # State can be either: available, information, impaired, or unavailable
 resource "aws_vpc" "vpc_tidb_cluster" {
-  count      = "${var.external_vpc_id == "" ? 1 : 0}"
+  # count      = "${var.external_vpc_id == "" ? 1 : 0}"
   cidr_block = "${var.vpc_cidr_block}"
 
   tags {

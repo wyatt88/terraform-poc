@@ -4,10 +4,10 @@ variable "vpc_cidr_block" {
   default     = "10.0.0.0/16"
 }
 
-variable "external_vpc_id" {
-  type        = "string"
-  description = "Existed VPC ID"
-}
+# variable "external_vpc_id" {
+#   type        = "string"
+#   description = "Existed VPC ID"
+# }
 
 variable "azs" {
   description = "AWS Availability Zones Used"

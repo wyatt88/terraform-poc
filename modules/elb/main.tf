@@ -1,7 +1,7 @@
 resource "aws_elb" "aws-elb-sql" {
   name            = "pingcap-tidb-sql-elb"
-  subnets         = ["${aws_subnet.public.*.id}"]
-  security_groups = ["${aws_security_group.aws-elb.id}"]
+  subnets         = ["${var.subnet_public_ids}"]
+  security_groups = ["${var.asg_elb_sql_id}"]
 
   listener {
     instance_port     = 4000
@@ -18,7 +18,7 @@ resource "aws_elb" "aws-elb-sql" {
     interval            = 30
   }
 
-  instances                   = ["${aws_instance.tidb.*.id}"]
+  instances                   = ["${var.instance_ids}"]
   cross_zone_load_balancing   = true
   idle_timeout                = 400
   connection_draining         = true

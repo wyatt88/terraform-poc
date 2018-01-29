@@ -13,11 +13,15 @@ module "aws-vpc" {
 }
 
 module "aws-elb" {
-  source = "modules/elb"
+  source            = "modules/elb"
+  instance_ids      = "${aws_instance.tidb.*.id}"
+  subnet_public_ids = "${module.aws-vpc.aws_subnet_ids_public}"
+  asg_elb_sql_id    = "${module.aws-asg.aws-elb}"
 }
 
 module "aws-asg" {
-  source = "modules/asg"
+  source     = "modules/asg"
+  aws_vpc_id = "${module.aws-vpc.aws_vpc_id}"
 }
 
 module "ssh-key" {
@@ -44,9 +48,9 @@ resource "aws_instance" "bastion" {
   count                  = 1
   ami                    = "${data.aws_ami.distro.id}"
   instance_type          = "t2.micro"
-  subnet_id              = "${element(aws_subnet.public.*.id, 0)}"
-  key_name               = "${aws_key_pair.generated.key_name}"
-  vpc_security_group_ids = ["${aws_security_group.bastion-ssh.id}", "${aws_security_group.outbound.id}"]
+  subnet_id              = "${element(module.aws-vpc.aws_subnet_ids_public, 0)}"
+  key_name               = "${module.ssh-key.key_name}"
+  vpc_security_group_ids = ["${module.aws-asg.bastion-ssh}", "${module.aws-asg.outbound}"]
 
   tags {
     Name = "PingCAP-Bastion-${count.index}"
@@ -96,9 +100,9 @@ resource "aws_instance" "tidb" {
   count                  = "${var.tidb_count}"
   ami                    = "${data.aws_ami.distro.id}"
   instance_type          = "t2.micro"
-  subnet_id              = "${element(aws_subnet.private.*.id, count.index)}"
-  key_name               = "${aws_key_pair.generated.key_name}"
-  vpc_security_group_ids = ["${aws_security_group.intranet.id}", "${aws_security_group.outbound.id}", "${aws_security_group.tidb.id}"]
+  subnet_id              = "${element(module.aws-vpc.aws_subnet_ids_private, count.index)}"
+  key_name               = "${module.ssh-key.key_name}"
+  vpc_security_group_ids = ["${module.aws-asg.intranet}", "${module.aws-asg.outbound}", "${module.aws-asg.tidb}"]
 
   tags {
     Name    = "PingCAP-TiDB-${count.index}"
@@ -111,9 +115,9 @@ resource "aws_instance" "tikv" {
   count                  = "${var.tikv_count}"
   ami                    = "${data.aws_ami.distro.id}"
   instance_type          = "i3.4xlarge"
-  subnet_id              = "${element(aws_subnet.private.*.id, count.index)}"
-  key_name               = "${aws_key_pair.generated.key_name}"
-  vpc_security_group_ids = ["${aws_security_group.intranet.id}", "${aws_security_group.outbound.id}", "${aws_security_group.tikv.id}"]
+  subnet_id              = "${element(module.aws-vpc.aws_subnet_ids_private, count.index)}"
+  key_name               = "${module.ssh-key.key_name}"
+  vpc_security_group_ids = ["${module.aws-asg.intranet}", "${module.aws-asg.outbound}", "${module.aws-asg.tikv}"]
 
   ephemeral_block_device {
     device_name  = "/dev/sdb"
@@ -136,9 +140,9 @@ resource "aws_instance" "pd" {
   count                  = "${var.pd_count}"
   ami                    = "${data.aws_ami.distro.id}"
   instance_type          = "i3.2xlarge"
-  subnet_id              = "${element(aws_subnet.private.*.id, count.index)}"
-  key_name               = "${aws_key_pair.generated.key_name}"
-  vpc_security_group_ids = ["${aws_security_group.intranet.id}", "${aws_security_group.outbound.id}", "${aws_security_group.pd.id}"]
+  subnet_id              = "${element(module.aws-vpc.aws_subnet_ids_private, count.index)}"
+  key_name               = "${module.ssh-key.key_name}"
+  vpc_security_group_ids = ["${module.aws-asg.intranet}", "${module.aws-asg.outbound}", "${module.aws-asg.pd}"]
 
   ephemeral_block_device {
     device_name  = "/dev/sdb"
@@ -156,9 +160,9 @@ resource "aws_instance" "monitor" {
   count                  = "${var.monitor_count}"
   ami                    = "${data.aws_ami.distro.id}"
   instance_type          = "t2.micro"
-  subnet_id              = "${element(aws_subnet.private.*.id, count.index)}"
-  key_name               = "${aws_key_pair.generated.key_name}"
-  vpc_security_group_ids = ["${aws_security_group.intranet.id}", "${aws_security_group.outbound.id}"]
+  subnet_id              = "${element(module.aws-vpc.aws_subnet_ids_private, count.index)}"
+  key_name               = "${module.ssh-key.key_name}"
+  vpc_security_group_ids = ["${module.aws-asg.intranet}", "${module.aws-asg.outbound}"]
 
   tags {
     Name    = "PingCAP-Monitor-${count.index}"

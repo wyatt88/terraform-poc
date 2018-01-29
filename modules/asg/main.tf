@@ -1,6 +1,6 @@
 resource "aws_security_group" "bastion-ssh" {
   name   = "pingcap-tidb-ssh-securitygroup"
-  vpc_id = "${aws_vpc.vpc_tidb_cluster.id}"
+  vpc_id = "${var.aws_vpc_id}"
 
   tags {
     Name = "pingcap-tidb-ssh-securitygroup"
@@ -18,7 +18,7 @@ resource "aws_security_group_rule" "allow-ssh-connections" {
 
 resource "aws_security_group" "outbound" {
   name   = "pingcap-tidb-outbound-securitygroup"
-  vpc_id = "${aws_vpc.vpc_tidb_cluster.id}"
+  vpc_id = "${var.aws_vpc_id}"
 
   tags {
     Name = "pingcap-tidb-outbound-securitygroup"
@@ -36,7 +36,7 @@ resource "aws_security_group_rule" "allow-all-out-traffic" {
 
 resource "aws_security_group" "tidb" {
   name   = "pingcap-tidb-tidb-securitygroup"
-  vpc_id = "${aws_vpc.vpc_tidb_cluster.id}"
+  vpc_id = "${var.aws_vpc_id}"
 
   tags {
     Name = "pingcap-tidb-tidb-securitygroup"
@@ -63,7 +63,7 @@ resource "aws_security_group_rule" "allow-tidb-10080-connections" {
 
 resource "aws_security_group" "tikv" {
   name   = "pingcap-tidb-tikv-securitygroup"
-  vpc_id = "${aws_vpc.vpc_tidb_cluster.id}"
+  vpc_id = "${var.aws_vpc_id}"
 
   tags {
     Name = "pingcap-tidb-tikv-securitygroup"
@@ -81,7 +81,7 @@ resource "aws_security_group_rule" "allow-tikv-20160-connections" {
 
 resource "aws_security_group" "pd" {
   name   = "pingcap-tidb-pd-securitygroup"
-  vpc_id = "${aws_vpc.vpc_tidb_cluster.id}"
+  vpc_id = "${var.aws_vpc_id}"
 
   tags {
     Name = "pingcap-tidb-pd-securitygroup"
@@ -108,7 +108,7 @@ resource "aws_security_group_rule" "allow-pd-peer-connections" {
 
 resource "aws_security_group" "monitor" {
   name   = "pingcap-tidb-monitor-securitygroup"
-  vpc_id = "${aws_vpc.vpc_tidb_cluster.id}"
+  vpc_id = "${var.aws_vpc_id}"
 
   tags {
     Name = "pingcap-tidb-monitor-securitygroup"
@@ -153,7 +153,7 @@ resource "aws_security_group_rule" "allow-monitor-grafana-connections" {
 
 resource "aws_security_group" "intranet" {
   name   = "pingcap-tidb-intranet-securitygroup"
-  vpc_id = "${aws_vpc.vpc_tidb_cluster.id}"
+  vpc_id = "${var.aws_vpc_id}"
 
   tags {
     Name = "pingcap-tidb-intranet-securitygroup"
@@ -180,7 +180,7 @@ resource "aws_security_group_rule" "allow-intranet-icmp-connections" {
 
 resource "aws_security_group" "aws-elb" {
   name   = "pingcap-tidb-sql-securitygroup-elb"
-  vpc_id = "${aws_vpc.vpc_tidb_cluster.id}"
+  vpc_id = "${var.aws_vpc_id}"
 
   tags {
     Name = "pingcap-tidb-sql-securitygroup-elb"
