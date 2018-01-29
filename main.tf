@@ -9,7 +9,7 @@ data "aws_availability_zones" "available" {}
 
 module "aws-vpc" {
   source = "modules/vpc"
-  azs    = "${slice(data.aws_availability_zones.available,0,2)}"
+  azs    = "${slice(data.aws_availability_zones.available.names,0,2)}"
 }
 
 module "aws-elb" {
@@ -197,10 +197,11 @@ resource "null_resource" "inventories" {
   }
 }
 
-terraform {
-  backend "consul" {
-    address = "127.0.0.1:32772"
-    path    = "tidb-cluster"
-    lock    = false
-  }
-}
+# terraform {
+#   backend "consul" {
+#     address = "127.0.0.1:32772"
+#     path    = "tidb-cluster"
+#     lock    = false
+#   }
+# }
+
