@@ -10,7 +10,7 @@ variable "vpc_cidr_block" {
 # }
 
 variable "azs" {
-  description = "AWS Availability Zones Used"
+  description = "AWS Availability Zones In the region"
   type        = "list"
 }
 

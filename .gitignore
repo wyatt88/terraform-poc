@@ -3,7 +3,7 @@
 *.tfstate.backup
 
 # Module directory
-.terraform/
+.terraform/*
 
 # Tasks directory
-.vscode/
+.vscode/*
