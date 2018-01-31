@@ -29,7 +29,7 @@ resource "aws_nat_gateway" "vpc_tidb_ngw" {
 resource "aws_subnet" "public" {
   vpc_id            = "${aws_vpc.vpc_tidb_cluster.id}"
   count             = "${length(var.public_subnets)}"
-  availability_zone = "${element(slice(var.azs.names,0,length(var.public_subnets)),count.index)}"
+  availability_zone = "${element(slice(var.azs,0,length(var.public_subnets)),count.index)}"
   cidr_block        = "${element(var.public_subnets,count.index)}"
 
   tags {
@@ -41,7 +41,7 @@ resource "aws_subnet" "public" {
 resource "aws_subnet" "private" {
   vpc_id            = "${aws_vpc.vpc_tidb_cluster.id}"
   count             = "${length(var.private_subnets)}"
-  availability_zone = "${element(slice(var.azs.names,0,length(var.private_subnets)),count.index)}"
+  availability_zone = "${element(slice(var.azs,0,length(var.private_subnets)),count.index)}"
   cidr_block        = "${element(var.private_subnets,count.index)}"
 
   tags {

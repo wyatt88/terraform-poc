@@ -8,8 +8,13 @@ provider "aws" {
 data "aws_availability_zones" "available" {}
 
 module "aws-vpc" {
-  source = "modules/vpc"
-  azs    = "${data.aws_availability_zones.available}"
+  source             = "modules/vpc"
+  azs                = "${data.aws_availability_zones.available.names}"
+  public_subnets     = "${var.public_subnets}"
+  private_subnets    = "${var.private_subnets}"
+  vpc_cidr_block     = "${var.vpc_cidr_block}"
+  enable_nat_gateway = "${var.enable_nat_gateway}"
+  single_nat_gateway = "${var.single_nat_gateway}"
 }
 
 module "aws-elb" {

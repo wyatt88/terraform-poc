@@ -14,6 +14,24 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
+variable "public_subnets" {
+  type = "list"
+}
+
+variable "private_subnets" {
+  type = "list"
+}
+
+variable "vpc_cidr_block" {}
+
+variable "enable_nat_gateway" {
+  type = "string"
+}
+
+variable "single_nat_gateway" {
+  type = "string"
+}
+
 variable "tidb_count" {}
 
 variable "tikv_count" {}
