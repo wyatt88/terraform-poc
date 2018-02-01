@@ -25,11 +25,53 @@ variable "private_subnets" {
 variable "vpc_cidr_block" {}
 
 variable "enable_nat_gateway" {
-  type = "string"
+  description = "Should be true if you want to provision NAT Gateways for each of your private networks"
 }
 
 variable "single_nat_gateway" {
-  type = "string"
+  description = "Should be true if you want to provision a single shared NAT Gateway across all of your private networks"
+}
+
+variable "tidb_instance_type_number" {
+  description = "1 t2.micro \n 2 c4.large"
+  type        = "string"
+}
+
+variable "tidb_instance_type_map" {
+  type = "map"
+
+  default = {
+    "1" = "t2.micro"
+    "2" = "c4.large"
+  }
+}
+
+variable "tikv_instance_type_number" {
+  description = "1 t2.micro \n 2 c4.large"
+  type        = "string"
+}
+
+variable "tikv_instance_type_map" {
+  type = "map"
+
+  default = {
+    "1" = "t2.micro"
+    "2" = "c4.large"
+  }
+}
+
+variable "pd_instance_type_number" {
+  description = " 1 t2.micro \n 2 c4.large"
+  type        = "string"
+}
+
+variable "pd_instance_type_map" {
+  type = "map"
+
+  default = {
+    "1" = "t2.micro"
+    "2" = "c4.large"
+  }
 }
 
 variable "tidb_count" {}

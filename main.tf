@@ -104,7 +104,7 @@ resource "null_resource" "bastion-chmod" {
 resource "aws_instance" "tidb" {
   count                  = "${var.tidb_count}"
   ami                    = "${data.aws_ami.distro.id}"
-  instance_type          = "t2.micro"
+  instance_type          = "${var.tidb_instance_type_map[var.tidb_instance_type_number]}"
   subnet_id              = "${element(module.aws-vpc.aws_subnet_ids_private, count.index)}"
   key_name               = "${module.ssh-key.key_name}"
   vpc_security_group_ids = ["${module.aws-asg.intranet}", "${module.aws-asg.outbound}", "${module.aws-asg.tidb}"]
@@ -119,7 +119,7 @@ resource "aws_instance" "tidb" {
 resource "aws_instance" "tikv" {
   count                  = "${var.tikv_count}"
   ami                    = "${data.aws_ami.distro.id}"
-  instance_type          = "i3.4xlarge"
+  instance_type          = "${var.tidb_instance_type_map[var.tikv_instance_type_number]}"
   subnet_id              = "${element(module.aws-vpc.aws_subnet_ids_private, count.index)}"
   key_name               = "${module.ssh-key.key_name}"
   vpc_security_group_ids = ["${module.aws-asg.intranet}", "${module.aws-asg.outbound}", "${module.aws-asg.tikv}"]
@@ -144,7 +144,7 @@ resource "aws_instance" "tikv" {
 resource "aws_instance" "pd" {
   count                  = "${var.pd_count}"
   ami                    = "${data.aws_ami.distro.id}"
-  instance_type          = "i3.2xlarge"
+  instance_type          = "${var.tidb_instance_type_map[var.pd_instance_type_number]}"
   subnet_id              = "${element(module.aws-vpc.aws_subnet_ids_private, count.index)}"
   key_name               = "${module.ssh-key.key_name}"
   vpc_security_group_ids = ["${module.aws-asg.intranet}", "${module.aws-asg.outbound}", "${module.aws-asg.pd}"]
