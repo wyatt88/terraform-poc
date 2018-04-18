@@ -75,7 +75,7 @@ resource "null_resource" "bastion" {
     connection {
       type        = "ssh"
       user        = "ec2-user"
-      private_key = "${tls_private_key.pingcap-generated.private_key_pem}"
+      private_key = "${module.ssh-key.private_key_pem}"
       host        = "${aws_eip.bastion.public_ip}"
     }
   }
@@ -95,7 +95,7 @@ resource "null_resource" "bastion-chmod" {
     connection {
       type        = "ssh"
       user        = "ec2-user"
-      private_key = "${tls_private_key.pingcap-generated.private_key_pem}"
+      private_key = "${module.ssh-key.private_key_pem}"
       host        = "${aws_eip.bastion.public_ip}"
     }
   }
