@@ -80,6 +80,4 @@ variable "tikv_count" {}
 
 variable "pd_count" {}
 
-variable "monitor_count" {
-  default = 0
-}
+variable "monitor_count" {}
